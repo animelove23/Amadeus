@@ -4,6 +4,7 @@ from typing import Any, Iterable
 
 from agent.executor import ToolExecutor
 from agent.models import AgentRunResult, ToolCall
+from agent.policy import AgentPolicy
 from agent.registry import ToolRegistry
 from llm.adapter import LLMAdapter
 
@@ -20,15 +21,26 @@ class AgentRuntime:
         executor: ToolExecutor,
         active_tool_groups: Iterable[str] | None = None,
         max_steps: int = 4,
+        policy: AgentPolicy | None = None,
     ) -> None:
         self.adapter = adapter
         self.registry = registry
         self.executor = executor
         self.active_tool_groups = tuple(active_tool_groups or registry.list_groups())
         self.max_steps = max_steps
+        self.policy = policy or AgentPolicy()
 
     def run(self, messages: list[dict[str, Any]]) -> AgentRunResult:
-        working_messages = list(messages)
+        working_messages = [
+            {
+                "role": "system",
+                "content": self.policy.build_system_message(
+                    self.registry,
+                    self.active_tool_groups,
+                ),
+            },
+            *messages,
+        ]
         generated_messages: list[dict[str, Any]] = []
         used_tools: list[str] = []
 

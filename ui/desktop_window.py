@@ -88,8 +88,10 @@ class DesktopChatWindow(QWidget):
         self.transcript: deque[str] = deque(maxlen=80)
         self.sprite_paths = {
             "neutral": PROJECT_ROOT / "assets" / "kurisu" / "neutral.jpg",
-            "happy": PROJECT_ROOT / "assets" / "kurisu" / "happy.png",
-            "angry": PROJECT_ROOT / "assets" / "kurisu" / "angry.png",
+            "happy": PROJECT_ROOT / "assets" / "kurisu" / "happy.jpg",
+            "angry": PROJECT_ROOT / "assets" / "kurisu" / "angry.jpg",
+            "playful": PROJECT_ROOT / "assets" / "kurisu" / "playful.jpg",
+            "shy": PROJECT_ROOT / "assets" / "kurisu" / "shy.jpg",
         }
         self.current_emotion = "neutral"
 
@@ -154,17 +156,20 @@ class DesktopChatWindow(QWidget):
     def _build_dialogue_panel(self) -> None:
         self.dialogue_frame = QFrame()
         self.dialogue_frame.setObjectName("dialogueFrame")
-        self.dialogue_frame.setMinimumHeight(230)
+        self.dialogue_frame.setFixedHeight(250)
 
         dialogue_layout = QVBoxLayout(self.dialogue_frame)
         dialogue_layout.setContentsMargins(30, 22, 30, 18)
         dialogue_layout.setSpacing(12)
 
-        self.dialogue_text = QLabel()
+        self.dialogue_text = QTextEdit()
         self.dialogue_text.setObjectName("dialogueText")
-        self.dialogue_text.setWordWrap(True)
-        self.dialogue_text.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
-        self.dialogue_text.setMinimumHeight(86)
+        self.dialogue_text.setReadOnly(True)
+        self.dialogue_text.setFrameShape(QFrame.Shape.NoFrame)
+        self.dialogue_text.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.dialogue_text.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.dialogue_text.setLineWrapMode(QTextEdit.LineWrapMode.WidgetWidth)
+        self.dialogue_text.setFixedHeight(92)
 
         name_row = QHBoxLayout()
         name_row.setSpacing(12)
@@ -283,7 +288,8 @@ class DesktopChatWindow(QWidget):
             self._show_dialogue(self.CHARACTER_NAME, "")
 
         self.current_ai_text += token
-        self.dialogue_text.setText(self.current_ai_text)
+        self.dialogue_text.setPlainText(self.current_ai_text)
+        self._scroll_dialogue_to_bottom()
 
     def on_error(self, error: str) -> None:
         self._append_log("系统", f"错误：{error}")
@@ -336,7 +342,12 @@ class DesktopChatWindow(QWidget):
 
     def _show_dialogue(self, speaker: str, text: str) -> None:
         self.name_label.setText(speaker)
-        self.dialogue_text.setText(text)
+        self.dialogue_text.setPlainText(text)
+        self.dialogue_text.verticalScrollBar().setValue(0)
+
+    def _scroll_dialogue_to_bottom(self) -> None:
+        scroll_bar = self.dialogue_text.verticalScrollBar()
+        scroll_bar.setValue(scroll_bar.maximum())
 
     def _build_stylesheet(self) -> str:
         return """
@@ -374,9 +385,28 @@ class DesktopChatWindow(QWidget):
         }
 
         #dialogueText {
+            background-color: transparent;
+            border: none;
             color: #fbf8f1;
             font-size: 25px;
             line-height: 1.4;
+            padding: 0;
+        }
+
+        #dialogueText QScrollBar:vertical {
+            width: 8px;
+            background: rgba(255, 255, 255, 18);
+            margin: 0;
+        }
+
+        #dialogueText QScrollBar::handle:vertical {
+            background: rgba(243, 239, 230, 150);
+            min-height: 24px;
+        }
+
+        #dialogueText QScrollBar::add-line:vertical,
+        #dialogueText QScrollBar::sub-line:vertical {
+            height: 0;
         }
 
         #nameLabel {

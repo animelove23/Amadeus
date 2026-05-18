@@ -23,7 +23,15 @@ llmproject/
 │   ├── registry.py        # 工具注册表与分组
 │   ├── executor.py        # 工具执行器
 │   ├── runtime.py         # 模型 ↔ 工具循环
-│   └── builtin_tools.py   # 当前保留的最小内置工具
+│   ├── policy.py          # 工具使用规则与能力说明
+│   ├── discovery_tools.py # 工具发现 meta tools
+│   ├── bootstrap.py       # 默认工具装配入口
+│   ├── builtin_tools.py   # 当前保留的最小内置工具
+│   └── specialists/
+│       ├── desktop_agent.py
+│       ├── bilibili_agent.py
+│       ├── scholar_agent.py
+│       └── qq_agent.py
 │
 ├── core/
 │   ├── manager.py         # 应用编排层
@@ -36,7 +44,10 @@ llmproject/
 │   └── worker.py          # Qt 后台线程
 │
 ├── services/
-│   └── rag_service.py     # RAG 边界
+│   ├── rag_service.py     # RAG 边界
+│   ├── desktop_service.py # 与桌面系统交互的服务
+│   ├── scholar_service.py # Google Scholar 地址构造
+│   └── qq_service.py      # QQ 桌面自动化服务
 │
 ├── ui/
 │   └── desktop_window.py  # 桌面 UI
@@ -178,6 +189,134 @@ Memory RAGService   AgentRuntime
 
 - `Manager` 不再理解每个工具细节
 - 未来你要做 planner、反思、多步任务、风险确认，都可以优先长在 `AgentRuntime` 旁边，而不是把 `Manager` 塞成巨石
+
+### 4.5 `agent/policy.py`
+
+它负责把“什么时候必须使用工具”明确写进运行时提示。
+
+当前已经加入：
+
+- 实时信息优先用工具
+- 用户要求执行动作时优先用工具
+- 询问能力时可先调用工具发现
+- 没拿到工具结果前，不允许声称动作已完成
+
+这一层的作用，是把 Agent 从：
+
+```text
+有工具
+```
+
+推进到：
+
+```text
+知道何时该用工具
+```
+
+### 4.6 `agent/discovery_tools.py`
+
+它提供两个 meta tool：
+
+- `list_available_tools`
+- `search_tools`
+
+这让模型不只会“调用某个工具”，还可以查询自己的能力目录。  
+这是往 Shinsekai 的 `search_tools / list_tool_groups` 思路靠近的一步。
+
+### 4.7 `agent/specialists/`
+
+这里开始放“领域专长 Agent”。
+
+当前有四个：
+
+#### `DesktopAgent`
+
+当前提供：
+
+- `open_google`
+- `open_url`
+- `open_desktop_item`
+- `open_file`
+
+它背后依赖 `services/desktop_service.py`，把系统调用和 Agent 逻辑分开。
+
+#### `BilibiliAgent`
+
+当前提供：
+
+- `play_bilibili_favorite_folder`
+- `search_bilibili_and_open_first_video`
+
+它不会自己重复实现“打开网页”，而是复用 `DesktopAgent` 的能力。  
+这就是当前版本里最小的“Agent 协作”：
+
+```text
+BilibiliAgent
+      │
+      ▼
+DesktopAgent
+      │
+      ▼
+DesktopService
+```
+
+需要说明的是：  
+当前 `BilibiliAgent` 做的是“打开收藏夹播放页”的稳定基础版。  
+如果你以后想做到：
+
+- 自动读取收藏夹内容
+- 选择最新视频
+- 选择指定关键字视频
+- 在已登录账号下操作私有收藏夹
+
+那就需要继续接浏览器登录态或 B 站接口，不再只是简单 URL 跳转。
+
+当前新增的 `search_bilibili_and_open_first_video` 也是同样的分层思路：
+
+- `BilibiliAgent`
+  - 负责把“搜索并打开第一个视频”翻译成领域动作
+- `BilibiliService`
+  - 负责请求 B 站搜索结果并解析第一条视频
+- `DesktopAgent`
+  - 负责最终打开视频页
+
+这样可以在不依赖页面 DOM 的前提下先跑通稳定版本。  
+需要注意的是，B 站搜索接口属于平台网页接口，不是项目自身拥有的稳定协议；如果未来要做更强鲁棒性，仍然应该补浏览器自动化或更正式的 API 适配层。当前公开文档能看到分类搜索接口会返回 `result` 数组，视频项里包含 `bvid` 和 `title`，因此当前实现可以直接打开第一条视频对应的 `https://www.bilibili.com/video/{bvid}` 页面。
+
+#### `ScholarAgent`
+
+当前提供：
+
+- `open_google_scholar`
+- `search_google_scholar`
+
+它负责把“打开学术搜索 / 按关键词检索论文”翻译成领域动作，但不自己处理浏览器打开，仍然复用 `DesktopAgent`。  
+这样以后如果你要继续接：
+
+- arXiv
+- Semantic Scholar
+- Crossref
+- 论文下载 / 元数据抽取
+
+都可以沿着 `ScholarAgent -> ScholarService -> DesktopAgent` 这条线扩展，而不会把学术检索逻辑塞回通用桌面层。
+
+#### `QQAgent`
+
+当前提供：
+
+- `open_qq`
+- `send_qq_message`
+
+它负责把“打开 QQ / 给指定联系人或群聊发一条短消息”翻译成消息动作，底层交给 `services/qq_service.py`。  
+当前实现是桌面自动化基础版：
+
+- 只支持单次、单对象发送
+- 要求消息简短
+- 依赖用户已经登录 QQ
+- 依赖能准确找到目标联系人或群聊
+
+这一步的意义，不只是“多了一个工具”，而是项目开始出现真正的**消息通道**。  
+后面如果继续接微信、邮件、Slack，应该沿着 `MessagingAgent / Service` 这一层扩展，而不是把每个平台都塞进 `DesktopAgent`。
 
 ---
 
@@ -324,6 +463,8 @@ Shinsekai 对 embedding / reranker 的加载做了冷却和预热逻辑。
    - 为未来文件、网络、执行命令类工具做准备
 6. **插件工具**
    - 让外部模块能注册到统一 `ToolRegistry`
+7. **浏览器级 B 站自动化**
+   - 让 `BilibiliAgent` 从“打开收藏夹页”升级到“按条件选片并播放”
 
 ---
 

@@ -18,6 +18,7 @@ def register_builtin_tools(registry: ToolRegistry) -> None:
             },
             handler=_get_current_time,
             group="system",
+            owner="builtin",
             risk="low",
         )
     )
@@ -27,3 +28,4 @@ def _get_current_time(arguments: dict[str, Any]) -> dict[str, str]:
     if arguments:
         raise ValueError("get_current_time 不需要参数")
     return {"local_time": datetime.now().isoformat(timespec="seconds")}
+

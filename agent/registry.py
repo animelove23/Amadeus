@@ -30,6 +30,10 @@ class ToolRegistry:
     def list_groups(self) -> list[str]:
         return sorted(self._groups)
 
+    def list_tools(self, groups: Iterable[str] | None = None) -> list[ToolSpec]:
+        allowed_names = self._resolve_tool_names(groups)
+        return [self._tools[name] for name in allowed_names]
+
     def search(self, query: str) -> list[ToolSpec]:
         normalized_query = query.strip().lower()
         if not normalized_query:
@@ -41,6 +45,7 @@ class ToolRegistry:
             if normalized_query in tool.name.lower()
             or normalized_query in tool.description.lower()
             or normalized_query in tool.group.lower()
+            or normalized_query in tool.owner.lower()
         ]
 
     def _resolve_tool_names(self, groups: Iterable[str] | None) -> list[str]:

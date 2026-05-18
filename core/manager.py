@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from agent.builtin_tools import register_builtin_tools
+from agent.bootstrap import build_default_tool_registry
 from agent.executor import ToolExecutor
 from agent.registry import ToolRegistry
 from agent.runtime import AgentRuntime
@@ -25,10 +25,7 @@ class Manager:
         self.system_prompt = system_prompt
         self.memory = memory or ConversationMemory(system_prompt=system_prompt)
         self.rag_service = rag_service or RAGService()
-        self.tool_registry = tool_registry or ToolRegistry()
-
-        if not self.tool_registry.list_groups():
-            register_builtin_tools(self.tool_registry)
+        self.tool_registry = tool_registry or build_default_tool_registry()
 
         self.agent_runtime = agent_runtime or AgentRuntime(
             adapter=self.adapter,

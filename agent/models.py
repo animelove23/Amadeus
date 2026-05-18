@@ -16,6 +16,7 @@ class ToolSpec:
     parameters: dict[str, Any]
     handler: ToolHandler
     group: str = "default"
+    owner: str = "core"
     risk: str = "low"
 
     def to_model_schema(self) -> dict[str, Any]:

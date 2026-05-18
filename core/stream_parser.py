@@ -110,4 +110,4 @@ class LLMStreamParser:
         return text.replace("\r\n", "\n").replace("【", "[").replace("】", "]")
 
     def _normalize_emotion(self, emotion: str) -> str:
-        return emotion if emotion in {"neutral", "happy", "angry"} else "neutral"
+        return emotion if emotion in {"neutral", "happy", "angry", "playful", "shy"} else "neutral"
