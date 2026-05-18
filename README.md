@@ -1,6 +1,6 @@
 # Amadeus
 
-一个用于学习 Agent、RAG、记忆、LLM 适配层和桌面交互的角色引擎项目。
+一个受命运石之门0 中amadeus启发的模拟Amadeus
 
 ## 部署
 
