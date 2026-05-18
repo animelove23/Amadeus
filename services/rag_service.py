@@ -3,7 +3,6 @@ from dataclasses import dataclass
 
 @dataclass
 class RetrievedChunk:
-    """后续接入向量库后，RAG 返回的最小信息单元。"""
 
     content: str
     source: str | None = None
@@ -11,7 +10,6 @@ class RetrievedChunk:
 
 
 class RAGService:
-    """当前先保留空实现，保证 RAG 边界清晰。"""
 
     def retrieve(self, query: str, top_k: int = 4) -> list[RetrievedChunk]:
         return []

@@ -5,7 +5,6 @@ ChatMessage = dict[str, Any]
 
 
 class ConversationMemory:
-    """只负责保存对话历史，不负责模型调用或业务编排。"""
 
     def __init__(self, system_prompt: str = "") -> None:
         self.system_prompt = system_prompt

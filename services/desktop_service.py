@@ -7,7 +7,6 @@ from urllib.parse import urlparse
 
 
 class DesktopService:
-    """封装真正与桌面系统交互的动作。"""
 
     def open_url(self, url: str) -> dict[str, str]:
         parsed = urlparse(url)
@@ -26,7 +25,7 @@ class DesktopService:
         if not target.exists():
             raise FileNotFoundError(f"桌面上找不到: {item_name}")
 
-        os.startfile(target)  # type: ignore[attr-defined]
+        os.startfile(target)
         return {"opened_path": str(target)}
 
     def open_file(self, file_path: str) -> dict[str, str]:
@@ -43,5 +42,5 @@ class DesktopService:
         if not target.is_file():
             raise IsADirectoryError(f"目标不是文件: {target}")
 
-        os.startfile(target)  # type: ignore[attr-defined]
+        os.startfile(target)
         return {"opened_path": str(target)}

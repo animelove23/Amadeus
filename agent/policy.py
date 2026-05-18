@@ -6,7 +6,6 @@ from agent.registry import ToolRegistry
 
 
 class AgentPolicy:
-    """把“什么时候该用工具”显式告诉模型。"""
 
     def build_system_message(
         self,
@@ -31,6 +30,9 @@ class AgentPolicy:
 4. 只有在工具结果返回后，才能声称动作已完成。
 5. 如果缺少执行所需参数，应先向用户说明还缺什么，而不是伪造结果。
 6. 使用消息类工具时，必须先确认收件人和简短内容都明确；不要批量发送，也不要替用户扩写成长消息。
+7. 如果 QQ 目标名称不精确，先调用 search_qq_chats；当候选不唯一时，先把候选列给用户选择，再发送。
+8. 当 search_qq_chats 返回候选列表时，按序号和名称简洁展示给用户；用户确认后，优先使用 send_qq_message_to_candidate，而不是重新猜名称。
+9. 如果只是需要确认 QQ 状态，先调用 is_qq_open；open_qq 应复用已打开窗口，不要重复启动。
 
 当前启用的工具：
 {tool_summary}

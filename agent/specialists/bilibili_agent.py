@@ -11,7 +11,6 @@ from services.bilibili_service import BilibiliService
 
 
 class BilibiliAgent:
-    """负责把 B 站领域请求翻译成可执行网页动作的专长 Agent。"""
 
     MEDIA_ID_PATTERN = re.compile(r"/medialist/play/(?P<media_id>\d+)")
 

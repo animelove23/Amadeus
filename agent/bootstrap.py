@@ -8,7 +8,6 @@ from agent.specialists.scholar_agent import ScholarAgent
 
 
 def build_default_tool_registry() -> ToolRegistry:
-    """装配当前项目默认可用的工具和专长 Agent。"""
     registry = ToolRegistry()
     desktop_agent = DesktopAgent()
     bilibili_agent = BilibiliAgent(desktop_agent=desktop_agent)

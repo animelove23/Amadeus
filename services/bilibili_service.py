@@ -19,7 +19,6 @@ class BilibiliVideoResult:
 
 
 class BilibiliService:
-    """封装 B 站搜索访问，避免把 HTTP 细节塞进 Agent。"""
 
     NAV_ENDPOINT = "https://api.bilibili.com/x/web-interface/nav"
     SEARCH_ENDPOINT = "https://api.bilibili.com/x/web-interface/wbi/search/type"

@@ -10,7 +10,6 @@ from services.rag_service import RAGService
 
 
 class Manager:
-    """应用编排层：组装 memory / rag / agent / adapter，而不是亲自做所有事。"""
 
     def __init__(
         self,
@@ -39,10 +38,6 @@ class Manager:
         return self._run_turn(user_input)
 
     def chat_stream(self, user_input: str):
-        """
-        当前先保持结构优先：Agent 完成整轮后，再把最终正文交给 UI。
-        真正的流式 tool calling 以后应继续下沉到 AgentRuntime。
-        """
         yield self._run_turn(user_input)
 
     def clear_messages(self) -> None:

@@ -21,3 +21,4 @@ vosk
 gpu-list
 py7zr
 mem0ai
+pywinauto>=0.6.8

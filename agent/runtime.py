@@ -10,7 +10,6 @@ from llm.adapter import LLMAdapter
 
 
 class AgentRuntime:
-    """负责一次 Agent 回合中的模型 ↔ 工具循环。"""
 
     LOOP_LIMIT_TEXT = "工具调用次数过多，已停止本轮执行。"
 

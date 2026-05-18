@@ -6,7 +6,6 @@ from agent.registry import ToolRegistry
 
 
 def register_builtin_tools(registry: ToolRegistry) -> None:
-    """注册项目当前阶段保留的最小内置工具。"""
     registry.register(
         ToolSpec(
             name="get_current_time",

@@ -8,7 +8,6 @@ from services.desktop_service import DesktopService
 
 
 class DesktopAgent:
-    """负责打开网页与桌面项目的专长 Agent。"""
 
     def __init__(self, desktop_service: DesktopService | None = None) -> None:
         self.desktop_service = desktop_service or DesktopService()
@@ -97,7 +96,6 @@ class DesktopAgent:
         )
 
     def open_url_direct(self, url: str) -> dict[str, str]:
-        """供其他专长 Agent 复用的内部能力。"""
         return self.desktop_service.open_url(url)
 
     def _open_google(self, arguments: dict[str, Any]) -> dict[str, str]:

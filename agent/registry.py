@@ -7,7 +7,6 @@ from agent.models import ToolSpec
 
 
 class ToolRegistry:
-    """保存工具定义，并按组提供给模型。"""
 
     def __init__(self) -> None:
         self._tools: dict[str, ToolSpec] = {}

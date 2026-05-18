@@ -9,7 +9,6 @@ from services.scholar_service import ScholarService
 
 
 class ScholarAgent:
-    """负责 Google Scholar 打开与检索的专长 Agent。"""
 
     def __init__(
         self,

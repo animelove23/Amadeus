@@ -4,12 +4,6 @@ from core.messages import EmotionEvent, LLMTextEvent, MetadataEvent
 
 
 class LLMStreamParser:
-    """
-    解析模型流式输出中的“协议层”和“正文层”。
-    当前支持：
-        [emotion=happy]
-        [voice=kurisu]
-    """
 
     META_LINE_PATTERN = re.compile(r"^\[(?P<name>[A-Za-z_][\w-]*)=(?P<value>[^\]]+)\]$")
 

@@ -8,7 +8,6 @@ from agent.registry import ToolRegistry
 
 
 class ToolExecutor:
-    """真正执行工具调用，并把异常也整理成模型可继续处理的结果。"""
 
     def __init__(self, registry: ToolRegistry) -> None:
         self.registry = registry

@@ -24,9 +24,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 class SceneBackground(QWidget):
-    """用绘制而不是业务逻辑营造视觉小说的舞台感。"""
 
-    def paintEvent(self, event) -> None:  # noqa: N802 - Qt naming convention
+    def paintEvent(self, event) -> None:
         super().paintEvent(event)
 
         painter = QPainter(self)
@@ -40,7 +39,7 @@ class SceneBackground(QWidget):
         sky.setColorAt(1.0, QColor("#0f141c"))
         painter.fillRect(rect, sky)
 
-        # 远景光斑：让画面不像普通深色窗口，而像一张待机 CG。
+
         glow = QLinearGradient(0, 0, rect.width(), rect.height())
         glow.setColorAt(0.0, QColor(157, 195, 224, 65))
         glow.setColorAt(0.55, QColor(65, 87, 118, 20))
@@ -53,7 +52,7 @@ class SceneBackground(QWidget):
         painter.setBrush(QColor(255, 255, 255, 10))
         painter.drawEllipse(rect.width() - 520, 120, 320, 320)
 
-        # 简化后的“实验室”剪影，只提供层次，不抢对白。
+
         painter.setBrush(QColor(10, 15, 22, 95))
         painter.drawRect(0, int(rect.height() * 0.60), rect.width(), rect.height())
         painter.setBrush(QColor(12, 18, 26, 72))
@@ -74,7 +73,6 @@ class SceneBackground(QWidget):
 
 
 class DesktopChatWindow(QWidget):
-    """Galgame 风格桌面窗口：UI 只消费事件，不掺入 LLM / RAG / Agent 逻辑。"""
 
     CHARACTER_NAME = "牧濑红莉栖"
 

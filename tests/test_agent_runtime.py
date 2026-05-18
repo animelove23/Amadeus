@@ -78,8 +78,11 @@ def test_default_registry_contains_specialist_agent_tools() -> None:
     assert "open_file" in tool_names
     assert "open_google_scholar" in tool_names
     assert "search_google_scholar" in tool_names
+    assert "is_qq_open" in tool_names
     assert "open_qq" in tool_names
+    assert "search_qq_chats" in tool_names
     assert "send_qq_message" in tool_names
+    assert "send_qq_message_to_candidate" in tool_names
     assert "play_bilibili_favorite_folder" in tool_names
     assert "search_bilibili_and_open_first_video" in tool_names
 
@@ -118,8 +121,8 @@ def test_bilibili_search_tool_opens_first_video() -> None:
 
     desktop_agent = FakeDesktopAgent()
     agent = BilibiliAgent(
-        desktop_agent=desktop_agent,  # type: ignore[arg-type]
-        bilibili_service=FakeBilibiliService(),  # type: ignore[arg-type]
+        desktop_agent=desktop_agent,
+        bilibili_service=FakeBilibiliService(),
     )
 
     result = agent._search_and_open_first_video({"query": "机器学习"})
@@ -141,7 +144,7 @@ def test_desktop_agent_open_file_uses_desktop_service() -> None:
             return {"opened_path": file_path}
 
     service = FakeDesktopService()
-    agent = DesktopAgent(desktop_service=service)  # type: ignore[arg-type]
+    agent = DesktopAgent(desktop_service=service)
 
     result = agent._open_file({"file_path": "notes.pdf"})
 
@@ -172,7 +175,7 @@ def test_scholar_search_tool_opens_result_page() -> None:
             return {"opened_url": url}
 
     desktop_agent = FakeDesktopAgent()
-    agent = ScholarAgent(desktop_agent=desktop_agent)  # type: ignore[arg-type]
+    agent = ScholarAgent(desktop_agent=desktop_agent)
 
     result = agent._search_google_scholar({"query": "agent memory"})
 
@@ -207,7 +210,7 @@ def test_qq_agent_sends_short_message() -> None:
             return {**payload, "mode": "qq_short_message"}
 
     service = FakeQQService()
-    agent = QQAgent(qq_service=service)  # type: ignore[arg-type]
+    agent = QQAgent(qq_service=service)
 
     result = agent._send_qq_message(
         {
@@ -240,3 +243,156 @@ def test_qq_service_enforces_short_messages() -> None:
         assert "最多 60 个字符" in str(error)
     else:
         raise AssertionError("long messages should be rejected")
+
+
+def test_qq_service_search_returns_candidate_ids() -> None:
+    from services.qq_service import QQService
+
+    service = QQService(
+        executable_candidates=[],
+        search_provider=lambda keyword, chat_type, limit: [
+            "机器学习交流群",
+            "机器学习项目组",
+            "机器学习交流群",
+        ],
+    )
+
+    result = service.search_chats(keyword="机器学习", chat_type="group")
+
+    assert result == {
+        "keyword": "机器学习",
+        "chat_type": "group",
+        "candidates": [
+            {
+                "candidate_id": "group_1",
+                "name": "机器学习交流群",
+                "chat_type": "group",
+            },
+            {
+                "candidate_id": "group_2",
+                "name": "机器学习项目组",
+                "chat_type": "group",
+            },
+        ],
+        "requires_user_choice": True,
+    }
+
+
+def test_qq_agent_sends_to_confirmed_candidate() -> None:
+    from agent.specialists.qq_agent import QQAgent
+    from services.qq_service import QQService
+
+    sent_messages: list[dict[str, str]] = []
+
+    class FakeQQService(QQService):
+        def send_short_message(
+            self,
+            *,
+            chat_type: str,
+            recipient_name: str,
+            message: str,
+        ) -> dict[str, str]:
+            payload = {
+                "chat_type": chat_type,
+                "recipient_name": recipient_name,
+                "message": message,
+                "mode": "qq_short_message",
+            }
+            sent_messages.append(payload)
+            return payload
+
+    service = FakeQQService(
+        executable_candidates=[],
+        search_provider=lambda keyword, chat_type, limit: [
+            "机器学习交流群",
+            "机器学习项目组",
+        ],
+    )
+    service.search_chats(keyword="机器学习", chat_type="group")
+    agent = QQAgent(qq_service=service)
+
+    result = agent._send_qq_message_to_candidate(
+        {
+            "candidate_id": "group_2",
+            "message": "今晚稍后回复。",
+        }
+    )
+
+    assert sent_messages == [
+        {
+            "chat_type": "group",
+            "recipient_name": "机器学习项目组",
+            "message": "今晚稍后回复。",
+            "mode": "qq_short_message",
+        }
+    ]
+    assert result["recipient_name"] == "机器学习项目组"
+
+
+def test_qq_service_open_qq_reuses_existing_window() -> None:
+    from services.qq_service import QQService
+
+    class FakeQQService(QQService):
+        def __init__(self) -> None:
+            super().__init__(executable_candidates=[])
+            self.lookup_calls = 0
+
+        def _find_qq_window(self) -> int | None:
+            self.lookup_calls += 1
+            return 12345
+
+    service = FakeQQService()
+
+    assert service.open_qq() == {
+        "already_open": "true",
+        "window_handle": "12345",
+    }
+    assert service.lookup_calls == 1
+
+
+def test_qq_service_reports_closed_state() -> None:
+    from services.qq_service import QQService
+
+    class FakeQQService(QQService):
+        def _find_qq_window(self) -> int | None:
+            return None
+
+    service = FakeQQService(executable_candidates=[])
+
+    assert service.is_qq_open() == {
+        "is_open": "false",
+        "window_handle": "",
+    }
+
+
+def test_qq_service_picks_search_and_message_edits() -> None:
+    from services.qq_service import QQService
+
+    class FakeRect:
+        def __init__(self, top: int) -> None:
+            self.top = top
+
+    class FakeEdit:
+        def __init__(self, text: str, top: int) -> None:
+            self._text = text
+            self._rect = FakeRect(top)
+
+        def window_text(self) -> str:
+            return self._text
+
+        def rectangle(self) -> FakeRect:
+            return self._rect
+
+    class FakeWindow:
+        def descendants(self, **kwargs):
+            assert kwargs == {"control_type": "Edit"}
+            return [
+                FakeEdit("搜索", 10),
+                FakeEdit("", 300),
+            ]
+
+    service = QQService(executable_candidates=[])
+    window = FakeWindow()
+
+    assert service._find_search_edit(window).window_text() == "搜索"
+    assert service._find_message_edit(window).rectangle().top == 300

@@ -4,7 +4,6 @@ from urllib.parse import quote_plus
 
 
 class ScholarService:
-    """封装 Google Scholar 的地址构造逻辑。"""
 
     HOME_URL = "https://scholar.google.com/"
 

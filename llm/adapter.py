@@ -4,7 +4,6 @@ from openai import OpenAI
 
 
 class LLMAdapter(Protocol):
-    """Manager / AgentRuntime 依赖的最小模型接口。"""
 
     def set_user_template(self, template: str) -> None:
         ...
